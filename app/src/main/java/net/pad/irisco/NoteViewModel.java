@@ -18,7 +18,7 @@ public class NoteViewModel extends AndroidViewModel {
     public NoteViewModel(@NonNull Application application) {
         super(application);
         noteRepository = new NoteRepository(application);
-        allNote = noteRepository.allNote;
+        allNote = noteRepository.getAllNote();
     }
 
     public void insert(NoteModel noteModel) {
@@ -33,7 +33,7 @@ public class NoteViewModel extends AndroidViewModel {
         noteRepository.delete(noteModel);
     }
 
-    public void deleteAll(NoteModel noteModel) {
+    public void deleteAll() {
         noteRepository.deleteAll();
     }
 

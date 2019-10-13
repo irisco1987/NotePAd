@@ -10,44 +10,46 @@ import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.helper.ItemTouchHelper;
-import android.util.Log;
+import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
-import android.widget.Adapter;
 import android.widget.Toast;
 
 import java.util.List;
 
 public class ViewNote extends AppCompatActivity {
     NoteViewModel noteViewModel;
-    FloatingActionButton fab_add;
-    RecyclerView rec_note;
-    int REQUEST_ADD = 1;
-    int REQUEST_EDIT = 2;
-    String TITLE = "title";
-    String DESC = "desc";
-    String PRIORITY = "priority";
-    String ID = "id";
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_view_note);
-        fab_add = findViewById(R.id.fab_add);
-        rec_note = findViewById(R.id.rc_note);
+
+        RecyclerView recyclerView = findViewById(R.id.rc_note);
+        recyclerView.setLayoutManager(new LinearLayoutManager(this));
+        recyclerView.setHasFixedSize(true);
+        FloatingActionButton fab = findViewById(R.id.fab_add);
+        fab.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent intent = new Intent(ViewNote.this, AddEditNote.class);
+                startActivityForResult(intent, 1);
+            }
+        });
 
 
         final NoteAdapter note_adapter = new NoteAdapter();
-
-        rec_note.setLayoutManager(new LinearLayoutManager(this));
-        rec_note.hasFixedSize();
-        rec_note.setAdapter(note_adapter);
+        recyclerView.setAdapter(note_adapter);
 
 
         noteViewModel = ViewModelProviders.of(this).get(NoteViewModel.class);
         noteViewModel.getAllNote().observe(this, new Observer<List<NoteModel>>() {
             @Override
-            public void onChanged(@Nullable List<NoteModel> noteModels) {
-                note_adapter.submitList(noteModels);
+            public void onChanged(@Nullable List<NoteModel> notes) {
+                note_adapter.submitList(notes);
             }
         });
 
@@ -62,62 +64,81 @@ public class ViewNote extends AppCompatActivity {
             public void onSwiped(RecyclerView.ViewHolder viewHolder, int direction) {
                 noteViewModel.delete(note_adapter.getNote(viewHolder.getAdapterPosition()));
             }
-        }).attachToRecyclerView(rec_note);
+        }).attachToRecyclerView(recyclerView);
 
 
         note_adapter.setOnItemClickListener(new NoteAdapter.NoteClickListener() {
             @Override
             public void NoteClick(NoteModel noteModel) {
                 Intent intent = new Intent(ViewNote.this, AddEditNote.class);
-                intent.putExtra(TITLE, noteModel.getTitle());
-                intent.putExtra(DESC, noteModel.getDescription());
-                intent.putExtra(PRIORITY, noteModel.getPriority());
-                intent.putExtra(ID, noteModel.getId());
-                startActivityForResult(intent, REQUEST_EDIT);
+                intent.putExtra("Title", noteModel.getTitle());
+                intent.putExtra("Desc", noteModel.getDescription());
+                intent.putExtra("Priority", noteModel.priority);
+                intent.putExtra("Id", noteModel.getId());
+                startActivityForResult(intent, 2);
             }
         });
 
-
-        fab_add.setOnClickListener(new View.OnClickListener() {
+        fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 Intent intent = new Intent(ViewNote.this, AddEditNote.class);
-                startActivityForResult(intent, REQUEST_ADD);
+                startActivityForResult(intent, 1);
+
             }
         });
 
     }
 
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        MenuInflater menuInflater = getMenuInflater();
+        menuInflater.inflate(R.menu.delete_item, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.delete_all:
+                noteViewModel.deleteAll();
+                Toast.makeText(this, "all notes deleted", Toast.LENGTH_SHORT).show();
+                return true;
+            default:
+                return super.onOptionsItemSelected(item);
+        }
+
+    }
+
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        Log.d("djfbhduyfgdfuyd",resultCode+"_"+resultCode);
         super.onActivityResult(requestCode, resultCode, data);
-        if (resultCode == RESULT_OK && requestCode == REQUEST_ADD) {
-            String title = getIntent().getStringExtra(TITLE);
-            String desc = getIntent().getStringExtra(DESC);
-            int priority = getIntent().getIntExtra(PRIORITY, 0);
+        if (requestCode == 1 && resultCode == RESULT_OK) {
+            String title = data.getStringExtra("Title");
+            String desc = data.getStringExtra("Desc");
+            int priority = data.getIntExtra("Priority", 0);
+
 
             NoteModel note = new NoteModel(title, desc, priority);
             noteViewModel.insert(note);
-
             Toast.makeText(this, "Note Save", Toast.LENGTH_SHORT).show();
-        } else if (resultCode == RESULT_OK && requestCode == REQUEST_EDIT) {
-            String title = getIntent().getStringExtra(TITLE);
-            String desc = getIntent().getStringExtra(DESC);
-            int priority = getIntent().getIntExtra(PRIORITY, 0);
-            int id = getIntent().getIntExtra(ID, -1);
-            NoteModel noteModel = new NoteModel(title, desc, priority);
+        } else if (requestCode == 2 && resultCode == RESULT_OK) {
+            String title = data.getStringExtra("Title");
+            String desc = data.getStringExtra("Desc");
+            int priority = data.getIntExtra("Priority", 0);
+            int id = data.getIntExtra("Id", -1);
+            NoteModel note = new NoteModel(title, desc, priority);
             if (id == -1) {
                 Toast.makeText(this, "Note Not Update", Toast.LENGTH_SHORT).show();
                 return;
             }
-            noteModel.setId(id);
-            noteViewModel.update(noteModel);
+            note.setId(id);
+            noteViewModel.update(note);
             Toast.makeText(this, "Note Update", Toast.LENGTH_SHORT).show();
+
         } else {
-            Toast.makeText(this, "Note not Save", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Note Not Save", Toast.LENGTH_SHORT).show();
         }
-
-
     }
 }

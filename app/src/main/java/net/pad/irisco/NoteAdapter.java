@@ -9,13 +9,12 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
-import org.w3c.dom.Text;
-
 /**
  * Created by s.noori on 10/13/2019.
  */
 
 public class NoteAdapter extends ListAdapter<NoteModel, NoteAdapter.NoteViewHolder> {
+    private NoteClickListener noteClickListener;
 
     protected NoteAdapter() {
         super(DIFF_CALLBACK);
@@ -34,26 +33,25 @@ public class NoteAdapter extends ListAdapter<NoteModel, NoteAdapter.NoteViewHold
 
         @Override
         public boolean areContentsTheSame(NoteModel oldItem, NoteModel newItem) {
-            return (oldItem.getTitle().equalsIgnoreCase(newItem.getTitle()) && oldItem.getDescription().equalsIgnoreCase(newItem.getDescription()) && oldItem.getPriority() == (newItem.getPriority()));
+            return (oldItem.getTitle().equalsIgnoreCase(newItem.getTitle()) && oldItem.getDescription().equalsIgnoreCase(newItem.getDescription()) && oldItem.getPriority() == newItem.getPriority());
         }
     };
 
 
     public NoteViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_layout, parent, false);
-
         return new NoteViewHolder(view);
     }
 
     @Override
     public void onBindViewHolder(@NonNull NoteViewHolder holder, int position) {
         NoteModel note = getItem(position);
-        holder.txt_id.setText(String.valueOf(note.getId()));
+
+        holder.txt_id.setText(String.valueOf(note.getPriority()));
         holder.txt_title.setText(note.getTitle());
         holder.txt_description.setText(note.getDescription());
     }
 
-    private NoteClickListener noteClickListener;
 
     public interface NoteClickListener {
         void NoteClick(NoteModel noteModel);
@@ -83,6 +81,9 @@ public class NoteAdapter extends ListAdapter<NoteModel, NoteAdapter.NoteViewHold
             });
         }
     }
+
+
+
 
 
 }
